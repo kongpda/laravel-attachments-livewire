@@ -43,6 +43,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Checkout core package
+        uses: actions/checkout@v6
+        with:
+          repository: kongpda/laravel-attachments-core
+          path: packages/laravel-attachments-core
+
+      - name: Link sibling core package
+        run: ln -s "$GITHUB_WORKSPACE/packages/laravel-attachments-core" "$GITHUB_WORKSPACE/../laravel-attachments-core"
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
