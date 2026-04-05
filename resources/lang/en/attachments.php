@@ -1,0 +1,33 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'open' => 'Open',
+    'preview' => 'Preview',
+    'download' => 'Download',
+    'remove' => 'Remove',
+    'cancel' => 'Cancel',
+    'delete' => 'Delete',
+    'delete_permanently' => 'Delete permanently',
+    'remove_caption' => 'Remove caption',
+    'remove_caption_confirm' => 'Remove this caption from the attachment?',
+    'attachment' => 'Attachment',
+    'attachments' => 'Attachments',
+    'attachment_not_found' => 'Attachment not found.',
+    'caption_saved' => 'Caption saved.',
+    'caption_save_failed' => 'Unable to save the caption.',
+    'attachment_click_to_add_caption' => 'Click to add a caption',
+    'attachment_caption_placeholder' => 'Add a short caption',
+    'upload_heading' => 'Drop files here or click to browse',
+    'upload_help_text' => 'PDF, images, and office documents up to 10 MB each',
+    'uploading' => 'Uploading...',
+    'delete_attachment_title' => 'Delete attachment',
+    'delete_attachment_subtitle' => 'This action cannot be undone.',
+    'delete_attachment_warning_heading' => 'Permanent deletion',
+    'delete_attachment_warning_text' => 'This will permanently delete <strong>:name</strong> from both the database and storage.',
+    'pending_attachments' => 'Pending attachments',
+    'existing_attachments' => 'Existing attachments',
+    'preview_unavailable' => 'Preview unavailable',
+    'no_preview_available' => 'This file cannot be previewed in the browser.',
+];
