@@ -7,14 +7,23 @@ namespace Kongpda\LaravelAttachments\Livewire;
 use Flux\Flux;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Model;
+use Kongpda\LaravelAttachments\Actions\UploadAttachment;
+use Kongpda\LaravelAttachments\Exceptions\DisallowedMimeException;
+use Kongpda\LaravelAttachments\Exceptions\FileTooLargeException;
+use Kongpda\LaravelAttachments\Http\Resources\AttachmentResource;
 use Kongpda\LaravelAttachments\Support\AttachmentConfig;
-use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 class AttachmentSection extends Component
 {
+    use WithFileUploads;
+
     public object $attachable;
 
+    /** @var array<int, array<string, mixed>> */
     public array $attachments;
 
     public bool $editable = true;
@@ -23,7 +32,34 @@ class AttachmentSection extends Component
 
     public bool $showPreview = true;
 
+    public bool $allowUpload = false;
+
     public string $policy = 'update';
+
+    /**
+     * Pending file uploads bound to the upload dropzone.
+     *
+     * @var array<int, TemporaryUploadedFile>
+     */
+    public array $files = [];
+
+    public ?string $uploadError = null;
+
+    /**
+     * Caption draft per attachment id (keyed map for the consolidated cards).
+     *
+     * @var array<string, string>
+     */
+    public array $captions = [];
+
+    /**
+     * Whether each attachment's caption editor is expanded (Flux UI only).
+     *
+     * @var array<string, bool>
+     */
+    public array $expandedCaptions = [];
+
+    public ?string $recentlySavedId = null;
 
     public ?string $previewUrl = null;
 
@@ -40,30 +76,113 @@ class AttachmentSection extends Component
     public function mount(): void
     {
         $this->attachments ??= [];
+
+        foreach ($this->attachments as $attachment) {
+            $id = $attachment['id'] ?? null;
+
+            if ($id === null) {
+                continue;
+            }
+
+            $caption = (string) ($attachment['caption'] ?? $attachment['description'] ?? '');
+            $this->captions[$id] = $caption;
+            $this->expandedCaptions[$id] = $caption !== '';
+        }
     }
 
-    #[On('caption-saved')]
-    public function onCaptionSaved(?string $attachmentId = null, ?string $caption = null): void
+    public function updatedFiles(): void
     {
-        if ($attachmentId !== null) {
-            $index = collect($this->attachments)->search(fn (array $attachment): bool => ($attachment['id'] ?? '') === $attachmentId);
-
-            if ($index !== false) {
-                $this->attachments[$index]['caption'] = $caption;
-            }
+        if (! $this->allowUpload || $this->files === []) {
+            return;
         }
 
-        $this->toast(__('laravel-attachments::attachments.caption_saved'), 'success');
+        $attachable = $this->attachable;
+
+        if (! $attachable instanceof Model) {
+            return;
+        }
+
+        $this->authorize($this->policy, $attachable);
+        $this->validate(['files.*' => ['file']]);
+
+        $uploader = app(UploadAttachment::class);
+        $this->uploadError = null;
+
+        foreach ($this->files as $file) {
+            try {
+                $attachment = $uploader->handle($attachable, $file);
+            } catch (FileTooLargeException|DisallowedMimeException $exception) {
+                $this->uploadError = $exception->getMessage();
+                $this->toast($exception->getMessage(), 'danger');
+
+                continue;
+            }
+
+            /** @var array<string, mixed> $data */
+            $data = AttachmentResource::make($attachment)->resolve();
+            $id = (string) $data['id'];
+
+            $this->attachments[] = $data;
+            $this->captions[$id] = (string) ($data['caption'] ?? '');
+            $this->expandedCaptions[$id] = $this->captions[$id] !== '';
+
+            $this->dispatch('attachment-uploaded', id: $id);
+        }
+
+        $this->files = [];
+
+        if ($this->uploadError === null) {
+            $this->toast(__('laravel-attachments::attachments.upload_success'), 'success');
+        }
     }
 
-    #[On('caption-save-failed')]
-    public function onCaptionSaveFailed(): void
+    public function expandCaption(string $id): void
     {
-        $this->toast(__('laravel-attachments::attachments.caption_save_failed'), 'danger');
+        $this->expandedCaptions[$id] = true;
     }
 
-    #[On('preview-attachment')]
-    public function previewAttachmentById(string $id): void
+    public function saveCaption(string $id): void
+    {
+        $this->validate(['captions.'.$id => ['nullable', 'string', 'max:500']]);
+
+        $index = collect($this->attachments)->search(fn (array $a): bool => ($a['id'] ?? '') === $id);
+
+        if ($index === false) {
+            $this->toast(__('laravel-attachments::attachments.attachment_not_found'), 'danger');
+
+            return;
+        }
+
+        $newCaption = mb_trim((string) ($this->captions[$id] ?? '')) ?: null;
+        $currentCaption = mb_trim((string) ($this->attachments[$index]['caption'] ?? $this->attachments[$index]['description'] ?? '')) ?: null;
+
+        if ($newCaption === $currentCaption) {
+            $this->expandedCaptions[$id] = $newCaption !== null;
+
+            return;
+        }
+
+        $attachment = $this->findOwnedAttachment($id);
+
+        if (! $attachment) {
+            $this->toast(__('laravel-attachments::attachments.attachment_not_found'), 'danger');
+
+            return;
+        }
+
+        $this->authorize('update', $attachment);
+        $attachment->update(['caption' => $newCaption]);
+
+        $this->attachments[$index]['caption'] = $newCaption;
+        $this->captions[$id] = (string) $newCaption;
+        $this->expandedCaptions[$id] = $this->captions[$id] !== '';
+        $this->recentlySavedId = $newCaption !== null ? $id : null;
+
+        $this->toast(__('laravel-attachments::attachments.caption_saved'), 'success');
+        $this->dispatch('caption-saved', attachmentId: $id, caption: $newCaption);
+    }
+
+    public function openPreview(string $id): void
     {
         $attachment = collect($this->attachments)->firstWhere('id', $id);
 
@@ -80,19 +199,25 @@ class AttachmentSection extends Component
         $this->showModal('attachment-section-preview');
     }
 
-    #[On('confirm-delete-attachment')]
-    public function confirmDeleteAttachment(string $id, string $fileName): void
+    public function confirmDeleteAttachment(string $id): void
     {
+        $attachment = collect($this->attachments)->firstWhere('id', $id);
+
+        if (! $attachment) {
+            $this->toast(__('laravel-attachments::attachments.attachment_not_found'), 'danger');
+
+            return;
+        }
+
         $this->attachmentToDelete = $id;
-        $this->attachmentNameToDelete = $fileName;
+        $this->attachmentNameToDelete = (string) ($attachment['file_name'] ?? '');
 
         $this->showModal('attachment-section-delete');
     }
 
-    #[On('confirm-remove-caption')]
-    public function confirmRemoveCaption(string $attachmentId): void
+    public function confirmRemoveCaption(string $id): void
     {
-        $this->captionToRemoveFrom = $attachmentId;
+        $this->captionToRemoveFrom = $id;
 
         $this->showModal('attachment-section-remove-caption');
     }
@@ -120,12 +245,8 @@ class AttachmentSection extends Component
 
         $this->authorize($this->policy, $this->attachable);
 
-        $attachmentModel = AttachmentConfig::attachmentModel();
-        $attachment = $attachmentModel::query()
-            ->where('id', $this->captionToRemoveFrom)
-            ->where('attachable_type', $this->attachable->getMorphClass())
-            ->where('attachable_id', $this->attachable->getKey())
-            ->first();
+        $id = $this->captionToRemoveFrom;
+        $attachment = $this->findOwnedAttachment($id);
 
         if (! $attachment) {
             $this->toast(__('laravel-attachments::attachments.attachment_not_found'), 'danger');
@@ -138,16 +259,18 @@ class AttachmentSection extends Component
         $this->authorize('update', $attachment);
         $attachment->update(['caption' => null]);
 
-        $attachmentId = $this->captionToRemoveFrom;
-        $index = collect($this->attachments)->search(fn (array $a): bool => ($a['id'] ?? '') === $attachmentId);
+        $index = collect($this->attachments)->search(fn (array $a): bool => ($a['id'] ?? '') === $id);
 
         if ($index !== false) {
             $this->attachments[$index]['caption'] = null;
         }
 
+        $this->captions[$id] = '';
+        $this->expandedCaptions[$id] = false;
         $this->captionToRemoveFrom = null;
         $this->closeModal('attachment-section-remove-caption');
-        $this->dispatch('caption-saved', attachmentId: $attachmentId, caption: null);
+        $this->toast(__('laravel-attachments::attachments.caption_saved'), 'success');
+        $this->dispatch('caption-saved', attachmentId: $id, caption: null);
     }
 
     public function closePreview(): void
@@ -167,12 +290,8 @@ class AttachmentSection extends Component
 
         $this->authorize($this->policy, $this->attachable);
 
-        $attachmentModel = AttachmentConfig::attachmentModel();
-        $attachment = $attachmentModel::query()
-            ->where('id', $this->attachmentToDelete)
-            ->where('attachable_type', $this->attachable->getMorphClass())
-            ->where('attachable_id', $this->attachable->getKey())
-            ->first();
+        $id = $this->attachmentToDelete;
+        $attachment = $this->findOwnedAttachment($id);
 
         if (! $attachment) {
             $this->toast(__('laravel-attachments::attachments.attachment_not_found'), 'danger');
@@ -184,8 +303,17 @@ class AttachmentSection extends Component
         $this->authorize('delete', $attachment);
         $attachment->forceDeleteFromStorage();
 
+        $index = collect($this->attachments)->search(fn (array $a): bool => ($a['id'] ?? '') === $id);
+
+        if ($index !== false) {
+            unset($this->attachments[$index]);
+            $this->attachments = array_values($this->attachments);
+        }
+
+        unset($this->captions[$id], $this->expandedCaptions[$id]);
+
         $this->cancelDeleteAttachment();
-        $this->dispatch('attachment-deleted');
+        $this->dispatch('attachment-deleted', id: $id);
     }
 
     public function render(): Factory|View
@@ -195,6 +323,20 @@ class AttachmentSection extends Component
             : 'laravel-attachments::livewire.attachment-section';
 
         return view($view);
+    }
+
+    /**
+     * Locate an attachment owned by this section's attachable, scoped by morph type + id.
+     */
+    private function findOwnedAttachment(string $id): ?object
+    {
+        $attachmentModel = AttachmentConfig::attachmentModel();
+
+        return $attachmentModel::query()
+            ->where('id', $id)
+            ->where('attachable_type', $this->attachable->getMorphClass())
+            ->where('attachable_id', $this->attachable->getKey())
+            ->first();
     }
 
     private function toast(string $message, string $variant): void

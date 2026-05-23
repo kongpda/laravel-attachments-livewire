@@ -22,6 +22,7 @@ return [
     'upload_heading' => 'Drop files here or click to browse',
     'upload_help_text' => 'PDF, images, and office documents up to 10 MB each',
     'uploading' => 'Uploading...',
+    'upload_success' => 'Upload complete.',
     'delete_attachment_title' => 'Delete attachment',
     'delete_attachment_subtitle' => 'This action cannot be undone.',
     'delete_attachment_warning_heading' => 'Permanent deletion',

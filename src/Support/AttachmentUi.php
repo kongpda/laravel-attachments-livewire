@@ -9,27 +9,16 @@ use Illuminate\Http\UploadedFile;
 final class AttachmentUi
 {
     /**
-     * @return array<string>
+     * @return array<int, string>
      */
     public static function previewableMimes(): array
     {
-        return [
-            'image/jpeg',
-            'image/jpg',
-            'image/png',
-            'image/gif',
-            'image/webp',
-            'application/pdf',
-        ];
+        return PreviewableMimes::LIST;
     }
 
     public static function isPreviewableMime(?string $mime): bool
     {
-        if ($mime === null || $mime === '') {
-            return false;
-        }
-
-        return in_array($mime, self::previewableMimes(), true);
+        return PreviewableMimes::isPreviewable($mime);
     }
 
     public static function isImageUpload(UploadedFile $file): bool

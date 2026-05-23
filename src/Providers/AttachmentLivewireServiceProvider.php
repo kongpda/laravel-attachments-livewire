@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Kongpda\LaravelAttachments\Providers;
 
 use Illuminate\Support\Facades\Blade;
-use Kongpda\LaravelAttachments\Livewire\AttachmentEditCard;
 use Kongpda\LaravelAttachments\Livewire\AttachmentSection;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
@@ -31,7 +30,6 @@ final class AttachmentLivewireServiceProvider extends PackageServiceProvider
 
         if ((bool) config('attachments.livewire.register_components', true) && class_exists(Livewire::class)) {
             Livewire::component('attachments-section', AttachmentSection::class);
-            Livewire::component('attachments-edit-card', AttachmentEditCard::class);
         }
     }
 }

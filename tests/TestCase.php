@@ -19,6 +19,9 @@ abstract class TestCase extends Orchestra
         Factory::guessFactoryNamesUsing(
             fn (string $modelName) => 'Kongpda\\LaravelAttachments\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
+
+        // Testbench does not auto-run the core package's .php.stub migration.
+        (include __DIR__.'/../vendor/kongpda/laravel-attachments-core/database/migrations/create_attachments_table.php.stub')->up();
     }
 
     protected function getPackageProviders($app): array
@@ -32,6 +35,7 @@ abstract class TestCase extends Orchestra
 
     public function getEnvironmentSetUp($app): void
     {
+        config()->set('app.key', 'base64:2fl+Ktvkfl+Fuz4Qp/A75G2RTiWVA/ZoKZvp6fiiM10=');
         config()->set('database.default', 'testing');
         config()->set('database.connections.testing', [
             'driver' => 'sqlite',

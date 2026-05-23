@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Blade;
 
 it('registers package view namespaces', function (): void {
     expect(view()->exists('laravel-attachments::livewire.attachment-section'))->toBeTrue()
-        ->and(view()->exists('laravel-attachments::livewire.attachment-edit-card'))->toBeTrue()
         ->and(view()->exists('laravel-attachments::components.attachments.default.upload-section'))->toBeTrue()
         ->and(view()->exists('laravel-attachments::components.attachments.flux.upload-section'))->toBeTrue()
         ->and(view()->exists('laravel-attachments::components.attachments.default.preview-modal'))->toBeTrue()
@@ -14,8 +13,7 @@ it('registers package view namespaces', function (): void {
 });
 
 it('registers livewire components for package consumers', function (): void {
-    expect(app('livewire')->exists('attachments-section'))->toBeTrue()
-        ->and(app('livewire')->exists('attachments-edit-card'))->toBeTrue();
+    expect(app('livewire')->exists('attachments-section'))->toBeTrue();
 });
 
 it('renders anonymous attachment components when default ui is enabled', function (): void {
