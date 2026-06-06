@@ -6,7 +6,7 @@
 
     <div class="rounded-md border border-red-200 bg-white p-3 text-sm text-zinc-700">
         <p class="font-medium text-red-700">{{ $warningHeading }}</p>
-        <p class="mt-1">{!! $warningText !!}</p>
+        <p class="mt-1">{{ $warningText }}</p>
     </div>
 
     <div class="flex gap-3 text-sm">

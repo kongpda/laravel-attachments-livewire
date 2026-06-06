@@ -26,7 +26,7 @@ return [
     'delete_attachment_title' => 'Delete attachment',
     'delete_attachment_subtitle' => 'This action cannot be undone.',
     'delete_attachment_warning_heading' => 'Permanent deletion',
-    'delete_attachment_warning_text' => 'This will permanently delete <strong>:name</strong> from both the database and storage.',
+    'delete_attachment_warning_text' => 'This will permanently delete :name from both the database and storage.',
     'pending_attachments' => 'Pending attachments',
     'existing_attachments' => 'Existing attachments',
     'preview_unavailable' => 'Preview unavailable',

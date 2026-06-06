@@ -12,7 +12,7 @@
 
         <flux:callout variant="danger" icon="exclamation-triangle">
             <flux:callout.heading>{{ $warningHeading }}</flux:callout.heading>
-            <flux:callout.text>{!! $warningText !!}</flux:callout.text>
+            <flux:callout.text>{{ $warningText }}</flux:callout.text>
         </flux:callout>
 
         <div class="flex justify-end gap-3 pt-2">

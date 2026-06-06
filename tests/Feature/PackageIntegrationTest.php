@@ -35,3 +35,15 @@ it('renders namespaced anonymous attachment components when default ui is enable
         ->and($html)->toContain('Helpful text')
         ->and($html)->toContain('wire:model="attachments"');
 });
+
+it('escapes delete confirmation warning copy', function (): void {
+    config()->set('attachments.ui.driver', 'default');
+
+    $html = Blade::render(
+        '<x-attachments.delete-confirmation-modal :warning-text="$warning" />',
+        ['warning' => '<script>alert(1)</script>'],
+    );
+
+    expect($html)->not->toContain('<script>')
+        ->and($html)->toContain('alert(1)');
+});

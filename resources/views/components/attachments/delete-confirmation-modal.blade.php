@@ -10,7 +10,7 @@
 ])
 
 @php
-    $resolvedWarningText = $warningText ?? __('laravel-attachments::attachments.delete_attachment_warning_text', ['name' => e($fileName)]);
+    $resolvedWarningText = $warningText ?? __('laravel-attachments::attachments.delete_attachment_warning_text', ['name' => $fileName]);
 @endphp
 
 @if (\Kongpda\LaravelAttachments\Support\AttachmentConfig::usesFluxUi())

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Kongpda\LaravelAttachments\Support;
 
 use Illuminate\Http\UploadedFile;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 final class AttachmentUi
 {
@@ -41,6 +42,10 @@ final class AttachmentUi
     public static function resolveTemporaryPreviewUrl(UploadedFile $file): ?string
     {
         if (! self::isImageUpload($file) && ! self::isPdfUpload($file) && ! self::hasPdfExtension($file)) {
+            return null;
+        }
+
+        if (! $file instanceof TemporaryUploadedFile) {
             return null;
         }
 
