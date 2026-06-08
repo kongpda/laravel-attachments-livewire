@@ -25,6 +25,7 @@ final class AttachmentLivewireServiceProvider extends PackageServiceProvider
     public function bootingPackage(): void
     {
         $this->loadViewsFrom(__DIR__.'/../../resources/views', self::VIEW_NAMESPACE);
+        $this->loadTranslationsFrom(__DIR__.'/../../resources/lang', self::VIEW_NAMESPACE);
         Blade::anonymousComponentPath(__DIR__.'/../../resources/views/components');
         Blade::anonymousComponentPath(__DIR__.'/../../resources/views/components/attachments', 'attachments');
 
