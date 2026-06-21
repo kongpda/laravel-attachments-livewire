@@ -41,10 +41,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Checkout core package
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: kongpda/laravel-attachments-core
           path: packages/laravel-attachments-core
