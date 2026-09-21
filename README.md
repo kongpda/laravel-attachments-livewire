@@ -103,10 +103,6 @@ composer test
 composer analyse
 ```
 
-For local development, keep the core checkout next to this one
-(`../laravel-attachments-core`). The path repository in `composer.json`
-resolves it until core is on Packagist.
-
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md).

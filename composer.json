@@ -65,18 +65,6 @@
             "phpstan/extension-installer": true
         }
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../laravel-attachments-core",
-            "options": {
-                "symlink": true,
-                "versions": {
-                    "kongpda/laravel-attachments-core": "0.2.0"
-                }
-            }
-        }
-    ],
     "extra": {
         "laravel": {
             "providers": [
