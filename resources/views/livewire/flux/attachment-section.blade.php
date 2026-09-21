@@ -32,16 +32,13 @@
                         wire:click="openPreview('{{ $id }}')"
                     >
                         @if ($thumbOrImageUrl)
-                            <span class="relative flex h-full w-full items-center justify-center">
+                            <span x-data class="relative flex h-full w-full items-center justify-center">
                                 <img
                                     src="{{ $thumbOrImageUrl }}"
                                     alt=""
                                     class="h-full w-full object-contain"
                                     loading="lazy"
-                                    onerror="
-                                        this.classList.add('hidden');
-                                        this.nextElementSibling?.classList.remove('hidden');
-                                    "
+                                    x-on:error="$el.classList.add('hidden'); $el.nextElementSibling?.classList.remove('hidden')"
                                 />
                                 <flux:icon.document-text class="hidden size-10 text-zinc-400" />
                             </span>
@@ -57,16 +54,13 @@
                         class="flex h-24 w-full shrink-0 items-center justify-center overflow-hidden bg-zinc-100 transition hover:bg-zinc-200 dark:bg-zinc-700/50 dark:hover:bg-zinc-600/50"
                     >
                         @if ($thumbOrImageUrl)
-                            <span class="relative flex h-full w-full items-center justify-center">
+                            <span x-data class="relative flex h-full w-full items-center justify-center">
                                 <img
                                     src="{{ $thumbOrImageUrl }}"
                                     alt=""
                                     class="h-full w-full object-contain"
                                     loading="lazy"
-                                    onerror="
-                                        this.classList.add('hidden');
-                                        this.nextElementSibling?.classList.remove('hidden');
-                                    "
+                                    x-on:error="$el.classList.add('hidden'); $el.nextElementSibling?.classList.remove('hidden')"
                                 />
                                 <flux:icon.document class="hidden size-10 text-zinc-400" />
                             </span>

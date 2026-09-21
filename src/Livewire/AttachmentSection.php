@@ -13,6 +13,7 @@ use Kongpda\LaravelAttachments\Exceptions\DisallowedMimeException;
 use Kongpda\LaravelAttachments\Exceptions\FileTooLargeException;
 use Kongpda\LaravelAttachments\Http\Resources\AttachmentResource;
 use Kongpda\LaravelAttachments\Support\AttachmentConfig;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -21,19 +22,30 @@ class AttachmentSection extends Component
 {
     use WithFileUploads;
 
+    /**
+     * Everything that decides what this section may do is fixed at mount.
+     * Unlocked, a visitor could flip allowUpload on, or swap the ability
+     * checked before an upload for one they happen to hold.
+     */
+    #[Locked]
     public object $attachable;
 
     /** @var array<int, array<string, mixed>> */
     public array $attachments;
 
+    #[Locked]
     public bool $editable = true;
 
+    #[Locked]
     public bool $showDelete = true;
 
+    #[Locked]
     public bool $showPreview = true;
 
+    #[Locked]
     public bool $allowUpload = false;
 
+    #[Locked]
     public string $policy = 'update';
 
     /**

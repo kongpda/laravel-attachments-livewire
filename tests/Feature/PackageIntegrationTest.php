@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\ServiceProvider;
+use Kongpda\LaravelAttachments\Providers\AttachmentLivewireServiceProvider;
 
 it('registers package view namespaces', function (): void {
     expect(view()->exists('laravel-attachments::livewire.attachment-section'))->toBeTrue()
@@ -10,6 +12,13 @@ it('registers package view namespaces', function (): void {
         ->and(view()->exists('laravel-attachments::components.attachments.flux.upload-section'))->toBeTrue()
         ->and(view()->exists('laravel-attachments::components.attachments.default.preview-modal'))->toBeTrue()
         ->and(view()->exists('laravel-attachments::components.attachments.flux.preview-modal'))->toBeTrue();
+});
+
+it('publishes views and translations where their namespace looks for overrides', function (): void {
+    $published = fn (string $tag): array => array_values(ServiceProvider::pathsToPublish(AttachmentLivewireServiceProvider::class, $tag));
+
+    expect($published('attachments-livewire-views'))->toBe([resource_path('views/vendor/laravel-attachments')])
+        ->and($published('attachments-livewire-translations'))->toBe([lang_path('vendor/laravel-attachments')]);
 });
 
 it('registers livewire components for package consumers', function (): void {

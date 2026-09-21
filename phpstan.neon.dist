@@ -5,3 +5,10 @@ parameters:
         - config
         - database
     tmpDir: build/phpstan
+    ignoreErrors:
+        # The laravel-attachments:: view namespace is registered by the service
+        # provider at boot, which static analysis cannot see.
+        -
+            identifier: argument.type
+            message: '#^Parameter \#1 \$view of function view expects view-string\|null, string given\.$#'
+            path: src/Livewire/AttachmentSection.php

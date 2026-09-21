@@ -28,15 +28,15 @@
                         </div>
 
                         @if ($showDelete)
-                            <button type="button" wire:click="confirmDeleteAttachment('{{ $id }}')" class="text-xs text-red-600">Delete</button>
+                            <button type="button" wire:click="confirmDeleteAttachment('{{ $id }}')" class="text-xs text-red-600">{{ __('laravel-attachments::attachments.delete') }}</button>
                         @endif
                     </div>
 
                     <div class="mt-3 flex gap-3">
-                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" class="text-sm text-blue-600">Open</a>
+                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" class="text-sm text-blue-600">{{ __('laravel-attachments::attachments.open') }}</a>
 
                         @if ($showPreview)
-                            <button type="button" wire:click="openPreview('{{ $id }}')" class="text-sm text-zinc-600">Preview</button>
+                            <button type="button" wire:click="openPreview('{{ $id }}')" class="text-sm text-zinc-600">{{ __('laravel-attachments::attachments.preview') }}</button>
                         @endif
                     </div>
 
@@ -76,12 +76,12 @@
                     <p class="text-xs text-zinc-500">{{ $previewType }}</p>
                 </div>
 
-                <button type="button" wire:click="closePreview" class="text-sm text-zinc-600">Close</button>
+                <button type="button" wire:click="closePreview" class="text-sm text-zinc-600">{{ __('laravel-attachments::attachments.close') }}</button>
             </div>
 
             <div class="mt-3">
                 <a href="{{ $previewUrl }}" target="_blank" rel="noopener noreferrer" class="text-sm text-blue-600">
-                    Open preview
+                    {{ __('laravel-attachments::attachments.open_preview') }}
                 </a>
             </div>
         </div>
@@ -89,20 +89,20 @@
 
     @if ($attachmentToDelete)
         <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-            <p class="text-sm text-red-800">Delete {{ $attachmentNameToDelete }}?</p>
+            <p class="text-sm text-red-800">{{ __('laravel-attachments::attachments.delete_confirm', ['name' => $attachmentNameToDelete]) }}</p>
             <div class="mt-3 flex gap-3">
-                <button type="button" wire:click="performDelete" class="text-sm text-red-700">Delete</button>
-                <button type="button" wire:click="cancelDeleteAttachment" class="text-sm text-zinc-600">Cancel</button>
+                <button type="button" wire:click="performDelete" class="text-sm text-red-700">{{ __('laravel-attachments::attachments.delete') }}</button>
+                <button type="button" wire:click="cancelDeleteAttachment" class="text-sm text-zinc-600">{{ __('laravel-attachments::attachments.cancel') }}</button>
             </div>
         </div>
     @endif
 
     @if ($captionToRemoveFrom)
         <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
-            <p class="text-sm text-amber-800">Remove caption?</p>
+            <p class="text-sm text-amber-800">{{ __('laravel-attachments::attachments.remove_caption_confirm') }}</p>
             <div class="mt-3 flex gap-3">
-                <button type="button" wire:click="performRemoveCaption" class="text-sm text-amber-700">Remove</button>
-                <button type="button" wire:click="cancelRemoveCaption" class="text-sm text-zinc-600">Cancel</button>
+                <button type="button" wire:click="performRemoveCaption" class="text-sm text-amber-700">{{ __('laravel-attachments::attachments.remove') }}</button>
+                <button type="button" wire:click="cancelRemoveCaption" class="text-sm text-zinc-600">{{ __('laravel-attachments::attachments.cancel') }}</button>
             </div>
         </div>
     @endif

@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -11,7 +13,10 @@ use Illuminate\Support\Facades\Storage;
 use Kongpda\LaravelAttachments\Http\Resources\AttachmentResource;
 use Kongpda\LaravelAttachments\Livewire\AttachmentSection;
 use Kongpda\LaravelAttachments\Models\Concerns\HasAttachments;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
+
+use function Pest\Laravel\actingAs;
 
 /**
  * Minimal attachable used to exercise the consolidated section component.
@@ -36,13 +41,23 @@ beforeEach(function (): void {
     Schema::create('section_test_posts', function (Blueprint $table): void {
         $table->id();
         $table->string('title')->nullable();
+        $table->unsignedBigInteger('user_id')->default(1);
     });
 
+    Relation::morphMap(['section-test-post' => SectionTestPost::class]);
     Storage::fake('local');
-    // Guest-capable signature so the before-callback short-circuits for the
-    // test's unauthenticated user (a zero-arg closure is skipped for guests).
-    Gate::before(fn ($user = null): bool => true);
+    config()->set('attachments.storage.default_disk', 'local');
+
+    // A real rule rather than a blanket allow, so a missing check fails a test.
+    Gate::define('update', fn (User $user, SectionTestPost $post): bool => $post->user_id === $user->id);
+
+    actingAs(sectionUser(1));
 });
+
+function sectionUser(int $id): User
+{
+    return (new User)->forceFill(['id' => $id]);
+}
 
 function sectionAttachment(SectionTestPost $post, array $overrides = []): object
 {
@@ -156,4 +171,48 @@ it('does not upload when allowUpload is false', function (): void {
         ->set('files', [UploadedFile::fake()->create('notes.txt', 10, 'text/plain')]);
 
     expect($post->attachments()->count())->toBe(0);
+});
+
+it('refuses to let the browser change what the section is allowed to do', function (string $property, mixed $value): void {
+    // These are set by the host's Blade at mount. If a request could set them,
+    // a read-only section becomes an upload form by editing one payload field.
+    $post = SectionTestPost::create(['title' => 'Post']);
+
+    Livewire::test(AttachmentSection::class, ['attachable' => $post, 'attachments' => []])
+        ->set($property, $value);
+})->with([
+    'allowUpload' => ['allowUpload', true],
+    'policy' => ['policy', 'view'],
+    'editable' => ['editable', true],
+    'showDelete' => ['showDelete', true],
+])->throws(CannotUpdateLockedPropertyException::class);
+
+it('does not store an upload when the section was mounted without uploads', function (): void {
+    $post = SectionTestPost::create(['title' => 'Post']);
+
+    Livewire::test(AttachmentSection::class, ['attachable' => $post, 'attachments' => []])
+        ->set('files', [UploadedFile::fake()->image('photo.png')]);
+
+    expect($post->attachments()->count())->toBe(0);
+});
+
+it('refuses every change from a user who may not update the parent', function (): void {
+    $post = SectionTestPost::create(['title' => 'Post', 'user_id' => 1]);
+    $attachment = sectionAttachment($post, ['caption' => 'original']);
+
+    actingAs(sectionUser(2));
+
+    $section = fn () => Livewire::test(AttachmentSection::class, [
+        'attachable' => $post,
+        'attachments' => [AttachmentResource::make($attachment)->resolve()],
+        'allowUpload' => true,
+    ]);
+
+    $section()->set("captions.{$attachment->id}", 'hijacked')->call('saveCaption', $attachment->id)->assertForbidden();
+    $section()->call('confirmDeleteAttachment', $attachment->id)->call('performDelete')->assertForbidden();
+    $section()->call('confirmRemoveCaption', $attachment->id)->call('performRemoveCaption')->assertForbidden();
+    $section()->set('files', [UploadedFile::fake()->create('notes.txt', 10, 'text/plain')])->assertForbidden();
+
+    expect($attachment->fresh()->caption)->toBe('original')
+        ->and($post->attachments()->count())->toBe(1);
 });
